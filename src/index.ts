@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import router from './routes/index';
+import { SupabaseConnection } from './utils/supabase';
 dotenv.config();
 
 const app = express();
@@ -19,6 +21,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.raw());
 
+app.use('/api/v1', router);
+
+SupabaseConnection();
 
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
