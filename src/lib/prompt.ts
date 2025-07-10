@@ -79,6 +79,10 @@ export const extractDescription = async (allListings: any) => {
   const prompt = `
 You are a real estate data assistant. Given a JSON dataset of real estate properties, summarize the key statistics in natural language like this:
 
+Here is the JSON input:
+${JSON.stringify(allListings)}
+first you have to analyze this json and extract the key details about the properties.
+
 ---
 I found [X] single-family homes for sale with a pool in the [ZIP] zip code area.
 
@@ -103,15 +107,8 @@ Your goal is to extract this information from the JSON input:
 - Year built (range)
 - AVM price (range), or use a fallback like listPrice if AVM is missing
 
-After the summary, write:
-**"Dataset available"**
-and display download links for JSON and CSV if supported.
-
 Only return this clean summary. No code or tables.
-
-Here is the JSON input:
-  ${JSON.stringify(allListings)}
-  `;
+`;
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
