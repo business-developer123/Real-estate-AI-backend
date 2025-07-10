@@ -13,13 +13,15 @@ export const analyzeProperty = async (req: Request, res: Response) => {
         const description = await extractDescription(jsonCleaned);
         const searchQueryState = JSON.parse(jsonCleaned || '{}');
 
-        const encoded = querystring.escape(JSON.stringify(searchQueryState));
+        const encoded = await querystring.escape(JSON.stringify(searchQueryState));
         const url = `https://www.zillow.com/homes/for_sale/LOCATION_rb/?searchQueryState=${encoded}`;
-
+        console.log(url);
         const results = await searchZillow(url);
+        console.log(results);
 
         if (!results || results.length === 0) {
             res.status(404).json({ message: 'No properties found.' });
+            return;
         }
 
         res.status(200).json({ listings: results, description });

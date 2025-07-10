@@ -3,6 +3,7 @@ import { openai } from './openai';
 export const extractSearchQuery = async (userInput: string) => {
   const systemPrompt = `
 You are a real estate AI assistant that creates a Zillow searchQueryState JSON object.
+
 Convert the following natural language into a strict Zillow searchQueryState JSON object. Only include results **inside the exact city**, and exclude surrounding cities or nearby areas.
 
 Natural language:
@@ -15,13 +16,18 @@ Requirements:
 - Must filter: homeType = SINGLE_FAMILY
 - Must exclude: condos, townhomes, apartments, manufactured homes
 - Must exclude nearby cities like Del Valle, Buda, etc.
-- Return a Zillow-compatible \`searchQueryState\` JSON structure with:
-- regionSelection (Austin, TX)
-- proper filterState
-- don't include null/undefined values
-- don't guess bounding boxes if you don't have them
 
-Return only a valid JSON structure that follows this schema exactly:
+Return a Zillow-compatible searchQueryState JSON object with:
+- Accurate mapBounds for Austin, TX
+- filterState with only the filters described
+- isMapVisible and isListVisible set to true
+- mapZoom appropriate for city-level detail (suggested: 11)
+- usersSearchTerm = "Austin, TX"
+- regionSelection = a placeholder: [{ "regionId": 0, "regionType": 2 }]
+- Remove any null or undefined fields unless required by Zillow
+- Sort = globalrelevanceex (recommended)
+
+Final Output must be a **valid, clean JSON** structure following this schema exactly:
 
 {
   "isMapVisible": true,
@@ -32,30 +38,29 @@ Return only a valid JSON structure that follows this schema exactly:
     "west": number
   },
   "filterState": {
-    "sort": { "value": "priced" },
-    "baths": { "min": number, "max": number or null },
-    "price": { "min": number or null, "max": number or null },
-    "mp": { "min": number or null, "max": number or null },
+    "sort": { "value": "globalrelevanceex" },
+    "baths": { "min": number },
     "beds": { "min": number },
-    "hoa": { "max": number or null },
+    "price": { "max": number },
     "mf": { "value": false },
     "con": { "value": false },
     "apa": { "value": false },
     "apco": { "value": false }
   },
   "isListVisible": true,
-  "mapZoom": 10,
+  "mapZoom": 11,
   "regionSelection": [
     {
       "regionId": 0,
       "regionType": 2
     }
   ],
-  "usersSearchTerm": "San Diego",
+  "usersSearchTerm": "Austin, TX",
   "schoolId": null,
   "pagination": {}
 }
-Only fill values that apply based on the user query. Use nulls only where required. Remove empty filters.
+
+Only return the JSON. Do not include comments or extra explanations. Use approximate bounds for central Austin (e.g., 30.16–30.51 latitude, -97.94 to -97.58 longitude). Do not guess filters. Do not include filters not mentioned in the user request.
 `;
 
   const completion = await openai.chat.completions.create({
@@ -72,33 +77,39 @@ Only fill values that apply based on the user query. Use nulls only where requir
 
 export const extractDescription = async (allListings: any) => {
   const prompt = `
-You are a real estate data analyst.
+You are a real estate data assistant. Given a JSON dataset of real estate properties, summarize the key statistics in natural language like this:
 
-You will receive a JSON array of property listings. Each object in the array includes fields such as:
+---
+I found [X] single-family homes for sale with a pool in the [ZIP] zip code area.
 
-- bedrooms (number)
-- bathrooms (number)
-- livingArea (number in square feet)
-- yearBuilt (number)
-- price (number)
-- city (string)
-- state (string)
-- homeType (string)
+Here are some key details about these properties:
 
-Your task is to analyze this data and summarize it in a friendly, readable format for users.
+• Bedrooms range from [min] to [max], with an average of [average] bedrooms  
+• Living areas range from [min] to [max] square feet  
+• Bathrooms range from [min] to [max]  
+• Built between [min year] and [max year]  
+• AVM (Automated Valuation Model) prices range from [$min_price] to [$max_price]
 
-Your response must include:
-1. The number of matching properties
-2. The range of bedrooms (e.g., 3 to 4 bedrooms)
-3. The range of bathrooms
-4. The range of living areas (in sq ft)
-5. The range of years built
-6. The range of property prices
-7. 2–3 helpful follow-up questions a user might ask (e.g., "Would you like to filter by neighborhood?" or "Do you want to adjust the price range?")
+Would you like to know more about these properties, such as their specific locations or more detailed characteristics?
 
-Make your output easy to understand, like you’re writing for homebuyers browsing online.
+---
 
-Here is the full JSON data:
+Your goal is to extract this information from the JSON input:
+- Total number of properties
+- Zip code (if provided)
+- Range and average of bedrooms
+- Range of square footage (livingArea)
+- Range of bathrooms
+- Year built (range)
+- AVM price (range), or use a fallback like listPrice if AVM is missing
+
+After the summary, write:
+**"Dataset available"**
+and display download links for JSON and CSV if supported.
+
+Only return this clean summary. No code or tables.
+
+Here is the JSON input:
   ${JSON.stringify(allListings)}
   `;
 
