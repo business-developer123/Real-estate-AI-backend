@@ -5,6 +5,7 @@ export const extractSearchQuery = async (userInput: string) => {
 You are a real estate AI assistant that creates a Zillow searchQueryState JSON object.
 
 Convert the following natural language into a strict Zillow searchQueryState JSON object. Only include results **inside the exact city**, and exclude surrounding cities or nearby areas.
+You must analyze the user input in detail and get the most similar and matching all data.
 
 Natural language:
 "Find me 3-bedroom, 2-bath single-family homes in Austin, TX under $350K."
@@ -60,7 +61,12 @@ Final Output must be a **valid, clean JSON** structure following this schema exa
   "pagination": {}
 }
 
-Only return the JSON. Do not include comments or extra explanations. Use approximate bounds for central Austin (e.g., 30.16–30.51 latitude, -97.94 to -97.58 longitude). Do not guess filters. Do not include filters not mentioned in the user request.
+Only return the JSON. 
+You must get the most similar and matching url.
+Do not include comments or extra explanations. 
+Use approximate bounds for central Austin (e.g., 30.16–30.51 latitude, -97.94 to -97.58 longitude). 
+Do not guess filters. 
+Do not include filters not mentioned in the user request.
 `;
 
   const completion = await openai.chat.completions.create({
@@ -81,44 +87,12 @@ You are a real estate data assistant. Analyze the following JSON dataset of real
 
 Here is the JSON input:
 ${JSON.stringify(allListings)}
-You have to analyze the json data and extract the key details about the properties.
-The data is exact and you have to extract the key details about the properties.
-
-This is only example of the output:
-
-I found [X] single-family homes for sale with a pool in the [ZIP] zip code area.
-
-Here are some key details about these properties:
-
-• Bedrooms range from [min] to [max], with an average of [average] bedrooms  
-• Living areas range from [min] to [max] square feet  
-• Bathrooms range from [min] to [max]  
-• Built between [min year] and [max year]  
-• AVM (Automated Valuation Model) prices range from [$min_price] to [$max_price]
-
-Would you like to know more about these properties, such as their specific locations or more detailed characteristics?
-
-
-Instructions:
-- Determine the total number of listings
-- Use the first ZIP code found in the dataset (assume all homes are in the same ZIP)
-- Use only single-family homes with a pool
-- Calculate min/max/average for:
-  - number of bedrooms
-  - number of bathrooms
-  - living area (in sqft)
-  - year built
-  - AVM (or use listPrice if AVM is missing)
-- Format prices as U.S. currency (e.g., $2,145,000)
-
-So you have to analyze the json data and rewrite the output in the similar format.
-Also you add more details about the properties.
-You needn't match the exact format of the example.
-Only have to rewrite the output in the similar format.
-And you add some questions to the user.
-Anyway you should write prompts creatively and ask questions.
-
-Only return the final summary text — no extra notes, explanations, or code.
+You need to parse the JSON data to extract the data that the customer wants.
+The data needs to be accurate and extract key details about the property.
+The information needs to be systematic and explained naturally and simply.
+If I say again, you have to write very simply.
+And you need to add some questions to the user.
+In any case, be creative with your prompts and ask questions.
 `;
 
   const completion = await openai.chat.completions.create({
