@@ -77,13 +77,15 @@ Only return the JSON. Do not include comments or extra explanations. Use approxi
 
 export const extractDescription = async (allListings: any) => {
   const prompt = `
-You are a real estate data assistant. Given a JSON dataset of real estate properties, summarize the key statistics in natural language like this:
+You are a real estate data assistant. Analyze the following JSON dataset of real estate listings and summarize the key statistics in clean natural language.
 
 Here is the JSON input:
 ${JSON.stringify(allListings)}
-first you have to analyze this json and extract the key details about the properties.
+You have to analyze the json data and extract the key details about the properties.
+The data is exact and you have to extract the key details about the properties.
 
----
+This is only example of the output:
+
 I found [X] single-family homes for sale with a pool in the [ZIP] zip code area.
 
 Here are some key details about these properties:
@@ -96,18 +98,27 @@ Here are some key details about these properties:
 
 Would you like to know more about these properties, such as their specific locations or more detailed characteristics?
 
----
 
-Your goal is to extract this information from the JSON input:
-- Total number of properties
-- Zip code (if provided)
-- Range and average of bedrooms
-- Range of square footage (livingArea)
-- Range of bathrooms
-- Year built (range)
-- AVM price (range), or use a fallback like listPrice if AVM is missing
+Instructions:
+- Determine the total number of listings
+- Use the first ZIP code found in the dataset (assume all homes are in the same ZIP)
+- Use only single-family homes with a pool
+- Calculate min/max/average for:
+  - number of bedrooms
+  - number of bathrooms
+  - living area (in sqft)
+  - year built
+  - AVM (or use listPrice if AVM is missing)
+- Format prices as U.S. currency (e.g., $2,145,000)
 
-Only return this clean summary. No code or tables.
+So you have to analyze the json data and rewrite the output in the similar format.
+Also you add more details about the properties.
+You needn't match the exact format of the example.
+Only have to rewrite the output in the similar format.
+And you add some questions to the user.
+Anyway you should write prompts creatively and ask questions.
+
+Only return the final summary text — no extra notes, explanations, or code.
 `;
 
   const completion = await openai.chat.completions.create({

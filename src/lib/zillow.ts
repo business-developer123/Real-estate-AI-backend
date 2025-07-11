@@ -2,7 +2,6 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log(process.env.RAPIDAPI_API_KEY);
 export const searchZillow = async (url: string) => {
     const response = await axios.get(`https://zillow56.p.rapidapi.com/search_url`, {
         headers: {

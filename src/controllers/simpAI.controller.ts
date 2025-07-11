@@ -10,15 +10,15 @@ export const analyzeProperty = async (req: Request, res: Response) => {
         const query = await extractSearchQuery(userInput);
         const jsonCleaned = query?.replace(/```json|```/g, "");
 
-        const description = await extractDescription(jsonCleaned);
-        const described = description?.replace(/\n/g, '<br />');
-
         const searchQueryState = JSON.parse(jsonCleaned || '{}');
 
         const encoded = await querystring.escape(JSON.stringify(searchQueryState));
         const url = `https://www.zillow.com/homes/for_sale/LOCATION_rb/?searchQueryState=${encoded}`;
 
         const results = await searchZillow(url);
+
+        const description = await extractDescription(results);
+        const described = description?.replace(/\n/g, '<br />');
 
         if (!results || results.length === 0) {
             res.status(404).json({ message: 'No properties found.' });
