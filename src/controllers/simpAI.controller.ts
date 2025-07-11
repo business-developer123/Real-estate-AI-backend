@@ -18,7 +18,7 @@ export const analyzeProperty = async (req: Request, res: Response) => {
         const results = await searchZillow(url);
 
         const description = await extractDescription(results);
-        const described = description?.replace(/\n/g, '<br />');
+        const described = description?.replace(/\n/g, '<br />').replace(/[#*]/g, '');
 
         if (!results || results.length === 0) {
             res.status(404).json({ message: 'No properties found.' });
