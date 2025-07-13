@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { extractDescription, extractSearchQuery } from '../lib/prompt';
 import { searchZillow } from '../lib/zillow';
 import querystring from 'querystring';
+import axios from 'axios';
 
 export const analyzeProperty = async (req: Request, res: Response) => {
     try {
@@ -31,3 +32,14 @@ export const analyzeProperty = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to analyze property' });
     }
 }
+
+export const getStreetView = async (req: Request, res: Response) => {
+    try {
+        const { location } = req.body;
+        const response = await axios.get(location);
+        res.status(200).json(response.data);
+    } catch (error) {
+        console.error('Error getting street view:', error);
+        res.status(500).json({ error: 'Failed to get street view' });
+    }
+}   
