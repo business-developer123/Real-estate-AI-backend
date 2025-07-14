@@ -3,7 +3,6 @@ import { openai } from './openai';
 export const extractSearchQuery = async (userInput: string) => {
   const systemPrompt = `
 You are a real estate AI assistant that generates Zillow-compatible searchQueryState JSON objects for property search URLs.
-
 Your task is to analyze natural language property search queries and convert them into a strict, valid Zillow searchQueryState JSON object. Your output must follow the exact schema format shown below and reflect only the filters explicitly described in the user's request.
 
 🧠 Responsibilities:
@@ -13,10 +12,62 @@ Your task is to analyze natural language property search queries and convert the
 - Only include filters that are explicitly mentioned
 - Ensure the JSON is syntactically and structurally valid
 
-🧾 Example Natural Language Query:
+✅ Output JSON Schema Template:
+{
+  "city": string,
+  "state": string,
+  "usersSearchTerm": string,
+  "mapBounds": {
+    "north": number,
+    "south": number,
+    "east": number,
+    "west": number
+  },
+  "filterState": {
+    "sort": { "value": string },
+    "price": {
+      "min": number,
+      "max": number
+    },
+    "beds": {
+      "min": number,
+      "max": number
+    },
+    "baths": {
+      "min": number,
+      "max": number
+    },
+   "mf": {
+      "value": boolean
+    },
+    "con": {
+      "value": boolean
+    },
+    "apa": {
+      "value": boolean
+    },
+    "apco": {
+      "value": boolean
+    },
+    "pool": {
+      "value": boolean
+    }
+  },
+  "isMapVisible": boolean,
+  "isListVisible": boolean,
+  "mapZoom": number,
+  "regionSelection": [
+    {
+      "regionId": number,
+      "regionType": number
+    }
+  ],
+  "schoolId": number
+}
+
+🧾 Example 1 Natural Language Query:
 "Find me 3-bedroom, 2-bath single-family homes in Austin, TX under $350K."
 
-✅ Output JSON Schema Template:
 {
   "city": "Austin",
   "state": "TX",
@@ -86,20 +137,24 @@ Your task is to analyze natural language property search queries and convert the
 
 📌 Reminder:
 Your output must reflect the user's specific request, but maintain the exact structure and naming style of the provided template.
-
 You must ONLY return the JSON output based on the analyzed user input.
 `;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userInput }
-    ],
-    temperature: 0
-  });
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userInput }
+      ],
+      temperature: 0
+    });
 
-  return completion.choices[0].message.content?.trim();
+    return completion.choices[0].message.content?.trim();
+  } catch (error) {
+    console.error('Error extracting search query:', error);
+    return null;
+  }
 };
 
 export const extractDescription = async (allListings: any, userInput: any) => {
@@ -155,7 +210,7 @@ ${userInput}
 ### 📦 Your Output Format:
 
 The description should be in above format.
-
+You mustn't contain the image url in the description.
 Based on the user's request, you must return **one of these two formats**:
 
 
@@ -181,6 +236,47 @@ If the client want to see the card view, you have to return the following JSON:
 \`\`\`
 ---
 
+### 📦 For example:
+Example 1:
+"Find me all single family homes for sale with a pool in 92037"
+
+{
+  "description": "description here",
+  "cardView": true
+}
+
+Example 2:
+"What is the median and average home value in Arizona?"
+
+{
+  "description": "description here",
+  "cardView": false
+}
+
+Example 3:
+"Find me all single family homes for sale with a pool in 92037"
+
+{
+  "description": "description here",
+  "cardView": true
+}
+
+Example 4:
+"What are the best value homes in 75001 with 3+ bedrooms?"
+
+{
+  "description": "description here",
+  "cardView": true
+}
+
+Example 5:
+"Show me investment properties in 60614 with high rental potential."
+
+{
+  "description": "description here",
+  "cardView": true
+}
+
 ### ❗ Rules:
 
 - The description should be more detailed and specific.
@@ -190,13 +286,18 @@ If the client want to see the card view, you have to return the following JSON:
 - Always return one of the two valid JSON output formats shown above.
 `;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0
-  });
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0
+    });
 
-  return completion.choices[0].message.content?.trim();
+    return completion.choices[0].message.content?.trim();
+  } catch (error) {
+    console.error('Error extracting description:', error);
+    return null;
+  }
 }

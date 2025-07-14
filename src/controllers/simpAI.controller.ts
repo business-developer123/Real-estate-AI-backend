@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
 import { extractDescription, extractSearchQuery } from '../lib/prompt';
-import { getMarketData, searchZillow } from '../lib/zillow';
+import { searchZillow } from '../lib/zillow';
 import querystring from 'querystring';
 import axios from 'axios';
-import stateCityMap from '../lib/state';
 
 export const analyzeProperty = async (req: Request, res: Response) => {
     try {
@@ -18,7 +17,7 @@ export const analyzeProperty = async (req: Request, res: Response) => {
         const encoded = await querystring.escape(JSON.stringify(searchQueryState));
 
         const url = `https://www.zillow.com/homes/for_sale/LOCATION_rb/?searchQueryState=${encoded}`;
-        console.log(url);
+
         const results = await searchZillow(url);
 
         const descriptionRaw = await extractDescription(results, userInput);
