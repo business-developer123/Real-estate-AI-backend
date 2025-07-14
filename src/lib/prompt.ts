@@ -82,6 +82,7 @@ Your task is to analyze natural language property search queries and convert the
 - Use appropriate map bounds for the target city based on real coordinates.
 - Ensure all data types and nesting are correct.
 - If there aren't the data that match, you have to return the similar data that match the user input.
+- If the value can't be found, you have to return the similar data that match the user input.
 
 📌 Reminder:
 Your output must reflect the user's specific request, but maintain the exact structure and naming style of the provided template.
@@ -101,41 +102,92 @@ You must ONLY return the JSON output based on the analyzed user input.
   return completion.choices[0].message.content?.trim();
 };
 
-export const extractDescription = async (allListings: any) => {
+export const extractDescription = async (allListings: any, userInput: any) => {
   const prompt = `
-You are a friendly and knowledgeable real estate data assistant.
+You are a smart, friendly, and reliable real estate assistant.
 
-You’ve just received a fresh set of real estate listings in JSON format. Your job is to review this data and explain it clearly to the user — just like a helpful local expert would. Be insightful, curious, and proactive.
+You just received a dataset of real estate listings in JSON format. Your job is to review this data and explain the key insights in **clear, natural language**, as if you're speaking to a home buyer, investor, or real estate enthusiast.
 
-Here is the dataset:
+---
+
+### 🏠 Listings JSON:
 ${JSON.stringify(allListings, null, 2)}
 
-Now, do the following:
+---
 
-1. Analyze the dataset thoroughly. Extract the most **important statistics** — such as:
-   - Average and median price
-   - Typical number of beds, baths, and square footage
+### 👤 User Request:
+${userInput}
+
+---
+
+### 🎯 The description should be:
+
+1. **Understand the user's intent.**  
+   Read the user’s input and figure out what they want:
+   - A general description of the listings
+   - A statistical summary (averages, medians, outliers)
+   - Both summary and listings
+
+2. **Analyze the dataset.**  
+   Extract useful insights from the listings data:
+   - Average and median home prices
+   - Typical number of bedrooms, bathrooms, and square footage
    - Price per square foot (if available)
    - Most common property types and features
-   - Any outliers, hot deals, or unusual listings
+   - Any special listings or notable trends
 
-2. Describe your findings in **clean, natural language** that anyone can understand — as if you're chatting with a home buyer or investor.
+3. **Write a natural summary.**  
+   Describe your findings in plain English — helpful, smart, and easy to understand. Avoid technical jargon. Use a warm and expert tone.
 
-3. Structure your explanation in a **clear and readable format**:
+4. **Structure your output.**  
+   Your summary should:
    - Use bullet points or short paragraphs
-   - Highlight notable trends and insights
-   - Keep it simple but informative
+   - Highlight key insights clearly
+   - Stay brief and relevant
 
-4. Be **proactive** — don’t wait for the user to ask. Based on the data you see:
-   - Suggest what the user might want to look at next
-   - Ask friendly, intelligent follow-up questions like:
-     > “Would you like me to narrow this down to homes under $500K?”  
-     > “Should I focus only on homes with 3+ bedrooms?”  
-     > “Are you more interested in investment opportunities or personal living?”
+5. **Ask helpful follow-up questions.**  
+   Be proactive. Suggest what the user might want to do next. For example:
+   - “Would you like to filter by price or number of bedrooms?”
+   - “Are you looking for investment properties or a place to live?”
+   - “Should I focus only on homes with a pool or garage?”
+---
 
-5. If the data is too sparse or inconsistent, explain that and suggest how the user can improve their query or dataset.
+### 📦 Your Output Format:
 
-Always be helpful, never guess. Prioritize accuracy and simplicity. Your tone should be **helpful, conversational, and intelligent** — like a friendly real estate expert who truly wants to help.
+The description should be in above format.
+
+Based on the user's request, you must return **one of these two formats**:
+
+
+"What is the median and average home value in Arizona?"
+Like this If the client wants only median and average home value, you have to return the following JSON:
+
+\`\`\`json
+{
+  "description": "description here",
+  "cardView": false
+}
+\`\`\`
+
+But like this example:
+"Find me all single family homes for sale with a pool in 92037"
+If the client want to see the card view, you have to return the following JSON:
+
+\`\`\`json
+{
+  "description": "description here",
+  "cardView": true
+}
+\`\`\`
+---
+
+### ❗ Rules:
+
+- The description should be more detailed and specific.
+- Do not make up any data that’s not in the JSON.
+- Be specific and accurate based on the actual listings.
+- Be helpful, clear, and friendly — like a real estate expert.
+- Always return one of the two valid JSON output formats shown above.
 `;
 
   const completion = await openai.chat.completions.create({

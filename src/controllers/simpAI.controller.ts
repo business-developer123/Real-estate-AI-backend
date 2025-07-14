@@ -21,16 +21,19 @@ export const analyzeProperty = async (req: Request, res: Response) => {
         console.log(url);
         const results = await searchZillow(url);
 
-        const description = await extractDescription(results);
+        const descriptionRaw = await extractDescription(results, userInput);
 
-        const described = description?.replace(/\n/g, '<br />').replace(/[#*]/g, '');
+        const described = descriptionRaw?.replace(/```json|```/g, '') || '';
+        const descObj = JSON.parse(described || '{}');
+        const cardView = !!descObj.cardView;
+        const description = descObj.description.replace(/\n/g, '<br />').replace(/[#*]/g, '');
 
         if (!results || results.length === 0) {
             res.status(404).json({ message: 'No properties found.' });
             return;
         }
 
-        res.status(200).json({ listings: results, description: described });
+        res.status(200).json({ listings: results, description: description, cardView: cardView });
     } catch (error) {
         console.error('Error analyzing property:', error);
         res.status(500).json({ error: 'Failed to analyze property' });
