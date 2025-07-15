@@ -120,6 +120,23 @@ Your task is to analyze natural language property search queries and convert the
   "schoolId": null
 }
 
+🧾 Example 2 Natural Language Query:
+"What is the median and average home value in Arizona?"
+
+
+{
+  "city": "",
+  "state": "AZ",
+  "usersSearchTerm": "Arizona, AZ",
+  "mapBounds": {
+    "north": 37.00426,
+    "south": 31.332177,
+    "east": -109.045223,
+    "west": -114.818269
+  },
+}
+
+
 ⚠️ Output Rules:
 - If you needn't any value, you have to remove that key and value.
 - You mustn't change the structure of the schema.
@@ -157,133 +174,129 @@ You must ONLY return the JSON output based on the analyzed user input.
   }
 };
 
-export const extractDescription = async (allListings: any, userInput: any) => {
+export const extractDescription = async (allListings: any, userInput: any, marketData: any) => {
   const prompt = `
-You are a smart, friendly, and reliable real estate assistant.
+You are a smart, helpful, and highly accurate real estate assistant.
 
-You just received a dataset of real estate listings in JSON format. Your job is to review this data and explain the key insights in **clear, natural language**, as if you're speaking to a home buyer, investor, or real estate enthusiast.
+You will receive:
+- A JSON array of real estate listings (allListings)
+- A JSON object of market data (marketData)
+- A natural language request from the user (userInput)
+
+Your job is to interpret the request and return a summary that is:
+- Clear and data-driven
+- Strictly limited to what the user asked
+- Easy to understand
+- Systematically structured
+- Friendly and helpful
 
 ---
 
-### 🏠 Listings JSON:
+🏠 Listings JSON:
 ${JSON.stringify(allListings, null, 2)}
 
 ---
 
-### 👤 User Request:
+📊 Market Data:
+${JSON.stringify(marketData, null, 2)}
+
+---
+
+👤 User Request:
 ${userInput}
 
 ---
 
-### 🎯 The description should be:
+🧠 Systematic Analysis Instructions:
 
-1. **Understand the user's intent.**  
-   Read the user’s input and figure out what they want:
-   - A general description of the listings
-   - A statistical summary (averages, medians, outliers)
-   - Both summary and listings
+1. Understand the user’s intent:
+   - If they ask for **statistics** (e.g. median/average prices, market trends):
+     → Use the \`marketData\` object
+   - If they ask to **see homes or listings** (e.g. homes for sale with a pool or in a certain area):
+     → Use the \`allListings\` array
+   - If unclear or mixed, prioritize statistics
 
-2. **Analyze the dataset.**  
-   Extract useful insights from the listings data:
-   - Average and median home prices
-   - Typical number of bedrooms, bathrooms, and square footage
-   - Price per square foot (if available)
-   - Most common property types and features
-   - Any special listings or notable trends
+2. If the user wants statistics:
+   - Use only \`marketData\`
+   - Show only relevant stats the user asked for:
+     - medianSalePrice
+     - averageSalePrice
+     - medianListPrice
+     - averageListPrice
+   - Include the date of the data (e.g. "as of 2025-07-11")
+   - Do not include features like bedrooms, bathrooms, or trends unless asked
+   - End with a friendly question:
+     - “Would you like to explore a specific city or zip code?”
+     - “Want to filter by property type or budget?”
 
-3. **Write a natural summary.**  
-   Describe your findings in plain English — helpful, smart, and easy to understand. Avoid technical jargon. Use a warm and expert tone.
+3. If the user wants listings:
+   - Show a short intro like: “Here are the current homes matching your request.”
+   - Do not include market statistics unless requested
+   - End with a helpful question:
+     - “Should I narrow this by price, beds, or features like pool or garage?”
 
-4. **Structure your output.**  
-   Your summary should:
-   - Use bullet points or short paragraphs
-   - Highlight key insights clearly
-   - Stay brief and relevant
-
-5. **Ask helpful follow-up questions.**  
-   Be proactive. Suggest what the user might want to do next. For example:
-   - “Would you like to filter by price or number of bedrooms?”
-   - “Are you looking for investment properties or a place to live?”
-   - “Should I focus only on homes with a pool or garage?”
 ---
 
-### 📦 Your Output Format:
+📦 Output Format:
 
-The description should be in above format.
-You mustn't contain the image url in the description.
-Based on the user's request, you must return **one of these two formats**:
+Return only one of the following two JSON responses:
 
-
-"What is the median and average home value in Arizona?"
-Like this If the client wants only median and average home value, you have to return the following JSON:
+If the user asked for statistics:
 
 \`\`\`json
 {
-  "description": "description here",
+  "description": "Your summarized statistical response here, based on marketData only. Include date. End with a short friendly question.",
   "cardView": false
 }
 \`\`\`
 
-But like this example:
-"Find me all single family homes for sale with a pool in 92037"
-If the client want to see the card view, you have to return the following JSON:
+If the user asked to see listings:
 
 \`\`\`json
 {
-  "description": "description here",
+  "description": "Your short listing introduction here, based on allListings only. End with a helpful filter-related question.",
   "cardView": true
 }
 \`\`\`
+
 ---
 
-### 📦 For example:
-Example 1:
-"Find me all single family homes for sale with a pool in 92037"
+✅ Examples:
 
+User: “What is the median and average home value in Arizona?”
+
+\`\`\`json
 {
-  "description": "description here",
-  "cardView": true
-}
-
-Example 2:
-"What is the median and average home value in Arizona?"
-
-{
-  "description": "description here",
+  "description": "Based on market data from 2025-07-11, the median sale price in Arizona is $499,000 and the average sale price is $487,000. The current median list price is $514,900 and the average list price is $514,900.\\n\\nWould you like to narrow this down to a specific city or property type?",
   "cardView": false
 }
+\`\`\`
 
-Example 3:
-"Find me all single family homes for sale with a pool in 92037"
+User: “Find all single-family homes for sale with a pool in 92037.”
 
+\`\`\`json
 {
-  "description": "description here",
+  "description": "Here are the current single-family homes for sale with a pool in the 92037 zip code.\\n\\nWould you like to filter by price, number of bedrooms, or lot size?",
   "cardView": true
 }
+\`\`\`
 
-Example 4:
-"What are the best value homes in 75001 with 3+ bedrooms?"
+---
 
-{
-  "description": "description here",
-  "cardView": true
-}
+🔒 Final Rules:
 
-Example 5:
-"Show me investment properties in 60614 with high rental potential."
+- Do NOT include:
+  - Extra summaries like beds, baths, or sq ft (unless requested)
+  - Market advice or general insights
+  - Common property types or patterns
 
-{
-  "description": "description here",
-  "cardView": true
-}
+- ALWAYS use:
+  - marketData for stats
+  - allListings for listing-based prompts
 
-### ❗ Rules:
+- END with a friendly follow-up question if appropriate
 
-- The description should be more detailed and specific.
-- Do not make up any data that’s not in the JSON.
-- Be specific and accurate based on the actual listings.
-- Be helpful, clear, and friendly — like a real estate expert.
-- Always return one of the two valid JSON output formats shown above.
+Only answer what the user asked. Be systematic, friendly, and accurate.
 `;
 
   try {

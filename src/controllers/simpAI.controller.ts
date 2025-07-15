@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { extractDescription, extractSearchQuery } from '../lib/prompt';
-import { searchZillow } from '../lib/zillow';
+import { getMarketData, searchZillow } from '../lib/zillow';
 import querystring from 'querystring';
 import axios from 'axios';
 
@@ -20,11 +20,16 @@ export const analyzeProperty = async (req: Request, res: Response) => {
 
         const results = await searchZillow(url);
 
-        const descriptionRaw = await extractDescription(results, userInput);
+        const marketData = await getMarketData(searchQueryState);
+
+        const descriptionRaw = await extractDescription(results, userInput, marketData);
 
         const described = descriptionRaw?.replace(/```json|```/g, '') || '';
+
         const descObj = JSON.parse(described || '{}');
+
         const cardView = !!descObj.cardView;
+
         const description = descObj.description.replace(/\n/g, '<br />').replace(/[#*]/g, '');
 
         if (!results || results.length === 0) {
@@ -34,7 +39,6 @@ export const analyzeProperty = async (req: Request, res: Response) => {
 
         res.status(200).json({ listings: results, description: description, cardView: cardView });
     } catch (error) {
-        console.error('Error analyzing property:', error);
         res.status(500).json({ error: 'Failed to analyze property' });
     }
 }

@@ -27,26 +27,21 @@ export const searchZillow = async (url: string) => {
 };
 
 
-export const getMarketData = async (state: string) => {
+export const getMarketData = async (results: any) => {
     try {
-        let marketData = [];
-        // const stateAbbreviation = stateAbbreviations[state as keyof typeof stateAbbreviations];
-        // const cities = stateCityMap[state as keyof typeof stateCityMap];
-        // for (let city of cities) {
-
+        let state = results.state;
+        let city = results.city;
+        let cityState = city ? `${city}, ${state}` : state;
         const response = await axios.get(`https://zillow56.p.rapidapi.com/market_sale_overview`, {
-            params: {
-                location: 'houston,tx'
-            },
             headers: {
                 'x-rapidapi-key': "2e5dd68fe7mshd661c7de69087c4p153130jsn820b372673ae",
                 'x-rapidapi-host': 'zillow56.p.rapidapi.com'
             },
+            params: {
+                location: cityState
+            }
         });
-        // marketData.push(response.data);
-        // }
-        console.log(response);
-        return;
+        return response.data;
     } catch (error) {
         console.error('Error getting market data:', error);
         return null;
