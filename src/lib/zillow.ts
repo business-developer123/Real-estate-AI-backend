@@ -2,6 +2,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import stateCityMap from './state';
 import stateAbbreviations from './shortState';
+import { fetchArticleText } from '../utils/fetchValue';
 dotenv.config();
 
 export const searchZillow = async (url: string) => {
@@ -27,7 +28,7 @@ export const searchZillow = async (url: string) => {
 };
 
 
-export const getMarketData = async (results: any) => {
+export const getMarketData = async (results: any, userInput: string) => {
     try {
         let state = results.state;
         let city = results.city;
@@ -41,7 +42,22 @@ export const getMarketData = async (results: any) => {
                 location: cityState
             }
         });
-        return response.data;
+
+        const googleResponse = await axios.get("https://www.googleapis.com/customsearch/v1", {
+            params: {
+                key: process.env.GOOGLE_API_KEY,
+                cx: process.env.GOOGLE_CSE_ID,
+                q: userInput
+            }
+        });
+
+        let links = googleResponse.data.items.filter((item: any) => item.link.includes("zillow.com"));
+        let googleData = await Promise.all(links.map((item: any) => fetchArticleText(item.link)));
+
+        return {
+            marketData: response.data,
+            googleData: googleData
+        };
     } catch (error) {
         console.error('Error getting market data:', error);
         return null;
