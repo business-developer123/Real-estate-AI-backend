@@ -51,12 +51,12 @@ export const getMarketData = async (results: any, userInput: string) => {
             }
         });
 
-        let links = googleResponse.data.items.filter((item: any) => item.link.includes("zillow.com"));
-        let googleData = await Promise.all(links.map((item: any) => fetchArticleText(item.link)));
+        let snippets = googleResponse.data.items.map((item: any) => item.snippet);
+        // let googleData = await Promise.all(links.map((item: any) => fetchArticleText(item.link)));
 
         return {
             marketData: response.data,
-            googleData: googleData
+            googleData: snippets
         };
     } catch (error) {
         console.error('Error getting market data:', error);
