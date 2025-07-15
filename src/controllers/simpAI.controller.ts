@@ -20,7 +20,7 @@ export const analyzeProperty = async (req: Request, res: Response) => {
 
         const results = await searchZillow(url);
 
-        const marketData = await getMarketData(searchQueryState);
+        const marketData = await getMarketData(searchQueryState, userInput);
 
         const descriptionRaw = await extractDescription(results, userInput, marketData);
 
