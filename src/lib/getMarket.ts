@@ -1,31 +1,6 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
-dotenv.config();
+import axios from "axios";
 
-export const searchZillow = async (url: string) => {
-    try {
-        const response = await axios.get(`https://zillow56.p.rapidapi.com/search_url`, {
-            headers: {
-                'x-rapidapi-key': process.env.RAPIDAPI_API_KEY,
-                'x-rapidapi-host': 'zillow56.p.rapidapi.com'
-            },
-            params: {
-                url: url,
-                page: '1',
-                output: 'json',
-                listing_type: 'by_agent'
-            },
-        });
-
-        return response.data.results;
-    } catch (error) {
-        console.error('Error searching Zillow:', error);
-        return null;
-    }
-};
-
-
-export const getMarketData = async (results: any, userInput: string) => {
+export const getMarket = async (results: any, userInput: string) => {
     try {
         let state = results.state;
         let city = results.city;
@@ -49,6 +24,7 @@ export const getMarketData = async (results: any, userInput: string) => {
         });
 
         let snippets = googleResponse.data.items.map((item: any) => item.snippet);
+        // let googleData = await Promise.all(links.map((item: any) => fetchArticleText(item.link)));
 
         return {
             marketData: response.data,
