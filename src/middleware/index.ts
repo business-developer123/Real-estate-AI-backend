@@ -1,4 +1,4 @@
 import { userMiddleware } from "./user.middleware";
-import { uploadMiddleware } from "./upload.middleware";
+import { uploadImageMiddleware } from "./upload.middleware";
 
-export { userMiddleware, uploadMiddleware };
+export { userMiddleware, uploadImageMiddleware };

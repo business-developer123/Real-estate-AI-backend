@@ -8,7 +8,7 @@ import {
     resetPasswordWithTokenValidation,
     updateUserValidation
 } from '../validation/auth.validation';
-import { userMiddleware, uploadMiddleware } from '../middleware';
+import { userMiddleware, uploadImageMiddleware } from '../middleware';
 
 const router = Router();
 
@@ -24,7 +24,7 @@ router.post('/resend-verification-email', resendVerificationEmail); // Resend a 
 // User Routes
 router.get('/user', getUser); // Get a user's profile
 router.put('/user', userMiddleware, updateUserValidation, updateUser); // Update a user's profile
-router.post('/user/upload', userMiddleware, uploadMiddleware, uploadImage); // Upload a user's image
+router.post('/user/upload', userMiddleware, uploadImageMiddleware, uploadImage); // Upload a user's image
 router.put('/user/change-password', resetPasswordValidation, resetPassword); // Change a user's password
 
 export default router;

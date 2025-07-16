@@ -1,5 +1,31 @@
 import { openai } from './openai';
 
+export const classifyQuestion = async (userInput: string) => {
+  const systemPrompt = `
+You are a real estate assistant. Classify the user's question into one of the following types:
+- listing: if it's asking to search or find properties (e.g., price, location, features)
+- analysis: if it's asking about trends, predictions, macroeconomic factors, or summaries
+
+Respond only with one word: listing or analysis.
+  `;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userInput }
+      ],
+      temperature: 0
+    });
+
+    return completion.choices[0].message.content?.trim();
+  } catch (error) {
+    console.error('Error analyzing assistant:', error);
+    return null;
+  }
+}
+
 export const extractSearchQuery = async (userInput: string) => {
   const systemPrompt = `
 You are a real estate AI assistant that generates Zillow-compatible searchQueryState JSON objects for property search URLs.
@@ -174,13 +200,12 @@ You must ONLY return the JSON output based on the analyzed user input.
   }
 };
 
-export const extractDescription = async (allListings: any, userInput: any, marketData: any) => {
-  const prompt = `
+export const listingAI = async (userInput: string, results: any) => {
+  const systemPrompt = `
 You are a smart, helpful, and highly accurate real estate assistant.
 
 You will receive:
-- A JSON array of real estate listings (allListings)
-- A JSON object of market data (marketData)
+- A JSON array of real estate listings (results)
 - A natural language request from the user (userInput)
 
 Your job is to interpret the request and return a summary that is:
@@ -193,12 +218,8 @@ Your job is to interpret the request and return a summary that is:
 ---
 
 🏠 Listings JSON:
-${JSON.stringify(allListings, null, 2)}
+${JSON.stringify(results, null, 2)}
 
----
-
-📊 Market Data:
-${JSON.stringify(marketData, null, 2)}
 
 ---
 
@@ -211,20 +232,17 @@ ${userInput}
 
 1. Understand the user’s intent:
    - If they ask for **statistics** (e.g. median/average prices, market trends):
-     → Use the \`marketData\` object
+     → Use the \`results\` array
    - If they ask to **see homes or listings** (e.g. homes for sale with a pool or in a certain area):
-     → Use the \`allListings\` array
+     → Use the \`results\` array
    - If unclear or mixed, prioritize statistics
 
 2. If the user wants statistics:
-   - Use only \`marketData\`
+   - Use only \`results\`
    - Show only relevant stats the user asked for:
      - medianSalePrice
      - averageSalePrice
-     - medianListPrice
-     - averageListPrice
    - Include the date of the data (e.g. "as of 2025-07-11")
-   - Do not include features like bedrooms, bathrooms, or trends unless asked
    - End with a friendly question:
      - “Would you like to explore a specific city or zip code?”
      - “Want to filter by property type or budget?”
@@ -237,80 +255,111 @@ ${userInput}
 
 ---
 
-📦 Output Format:
-
-Return only one of the following two JSON responses:
-
-If the user asked for statistics:
-
-\`\`\`json
-{
-  "description": "Your summarized statistical response here, based on marketData only. Include date. End with a short friendly question.",
-  "cardView": false
-}
-\`\`\`
-
-If the user asked to see listings:
-
-\`\`\`json
-{
-  "description": "Your short listing introduction here, based on allListings only. End with a helpful filter-related question.",
-  "cardView": true
-}
-\`\`\`
-
----
-
-✅ Examples:
-
-User: “What is the median and average home value in Arizona?”
-
-\`\`\`json
-{
-  "description": "Based on market data from 2025-07-11, the median sale price in Arizona is $499,000 and the average sale price is $487,000. The current median list price is $514,900 and the average list price is $514,900.\\n\\nWould you like to narrow this down to a specific city or property type?",
-  "cardView": false
-}
-\`\`\`
-
-User: “Find all single-family homes for sale with a pool in 92037.”
-
-\`\`\`json
-{
-  "description": "Here are the current single-family homes for sale with a pool in the 92037 zip code.\\n\\nWould you like to filter by price, number of bedrooms, or lot size?",
-  "cardView": true
-}
-\`\`\`
-
----
-
 🔒 Final Rules:
 
 - Do NOT include:
-  - Extra summaries like beds, baths, or sq ft (unless requested)
+  - Contain the images and URL
   - Market advice or general insights
   - Common property types or patterns
 
 - ALWAYS use:
-  - marketData for stats
-  - allListings for listing-based prompts
+  - results for stats
+  - results for listing-based prompts
 
 - END with a friendly follow-up question if appropriate
 
 Only answer what the user asked. Be systematic, friendly, and accurate.
-`;
+  `;
 
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'user', content: prompt }
+        { role: 'user', content: systemPrompt }
       ],
       temperature: 0
     });
 
-    return completion.choices[0].message.content?.trim();
+    let description = completion.choices[0].message.content?.trim();
+    let descriptionCleaned = description?.replace(/```json|```/g, '');
+    let descriptionCleanedFinal = descriptionCleaned?.replace(/\n/g, '<br />').replace(/[#*]/g, '');
+    return descriptionCleanedFinal;
   } catch (error) {
-    console.error('Error extracting description:', error);
+    console.error('Error analyzing assistant:', error);
+    return null;
+  }
+}
+
+export const analysisAI = async (userInput: string, results: any, basicData: any) => {
+  const systemPrompt = `
+You are a senior-level real estate investment analyst assistant.
+
+Your job is to accurately answer any real estate-related question using the user's natural language query, listing data, and market information. Your analysis must be complete, correct, data-driven, and actionable — similar to a professional investor report.
+
+---
+
+## 🎯 YOUR TASK:
+
+- Understand the user’s intent (e.g. price trends, appreciation, rental yield, risks, portfolio advice).
+- Use the provided datasets — listings and market info — to produce a deep analysis.
+- Include specific statistics, locations, and trends.
+- Compare the target market to other relevant markets if needed.
+- Identify both **opportunities** and **risks** (e.g., overbuilding, job shifts, regulation).
+- Name **specific neighborhoods**, not just cities (e.g., Barrio Viejo in Tucson, Roosevelt Row in Phoenix).
+- Suggest tools, data sources, or local steps the user can take next.
+
+---
+
+## 🔢 INPUTS:
+- User Input: ${userInput}
+- Listings Dataset (JSON): ${JSON.stringify(results, null, 2)}
+- Market Info Dataset (JSON): ${JSON.stringify(basicData, null, 2)}
+
+---
+
+## 🛠️ ANALYSIS REQUIREMENTS:
+
+✅ DO:
+- Use **quantitative metrics** (e.g., median price, appreciation %, rental yield).
+- Highlight **growth drivers**: population, jobs, infrastructure, zoning.
+- Show **comparisons**: local vs national trends.
+- Identify **high-growth neighborhoods**, not just cities.
+- Mention **risks** clearly and professionally.
+- Suggest actionable research tools or next steps (Zillow, Redfin, Census data, local agents).
+
+🚫 DO NOT:
+- Fabricate or assume missing numbers.
+- Give generic, vague summaries.
+- Skip risk analysis or market-specific issues.
+
+---
+
+## 🧾 OUTPUT FORMAT:
+- Professional tone — think investment report
+- Use **clear headers** and **bullet points** for readability
+- Include **specific city + neighborhood names**
+- Include **numeric values** when possible
+- Conclude with **actionable recommendations**
+
+---
+
+Now, analyze the user's question based on the above context.
+  `;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'user', content: systemPrompt }
+      ],
+      temperature: 0
+    });
+    let description = completion.choices[0].message.content?.trim();
+    let descriptionCleaned = description?.replace(/```json|```/g, '');
+    let descriptionCleanedFinal = descriptionCleaned?.replace(/\n/g, '<br />').replace(/[#*]/g, '');
+    return descriptionCleanedFinal;
+  } catch (error) {
+    console.error('Error analyzing assistant:', error);
     return null;
   }
 }
