@@ -16,6 +16,7 @@ export const searchZillow = async (url: string) => {
                 listing_type: 'by_agent'
             },
         });
+
         return response.data.results;
     } catch (error) {
         console.error('Error searching Zillow:', error);
