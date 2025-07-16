@@ -4,20 +4,31 @@ dotenv.config();
 
 export const searchZillow = async (url: string) => {
     try {
-        const response = await axios.get(`https://zillow56.p.rapidapi.com/search_url`, {
-            headers: {
-                'x-rapidapi-key': process.env.RAPIDAPI_API_KEY,
-                'x-rapidapi-host': 'zillow56.p.rapidapi.com'
-            },
-            params: {
-                url: url,
-                page: '1',
-                output: 'json',
-                listing_type: 'by_agent'
-            },
-        });
+        const getPage = (page: number) => {
+            return axios.get('https://zillow56.p.rapidapi.com/search_url', {
+                headers: {
+                    'x-rapidapi-key': process.env.RAPIDAPI_API_KEY,
+                    'x-rapidapi-host': 'zillow56.p.rapidapi.com'
+                },
+                params: {
+                    url: url,
+                    page: page.toString(),
+                    output: 'json',
+                    listing_type: 'by_agent'
+                }
+            });
+        };
 
-        return response.data.results;
+        const pagePromises = [1, 2, 3, 4, 5].map(getPage);
+
+        return Promise.all(pagePromises)
+            .then(responses => {
+                return responses.flatMap(response => response.data.results);
+            })
+            .catch(error => {
+                console.error('Error searching Zillow:', error);
+                return null;
+            });
     } catch (error) {
         console.error('Error searching Zillow:', error);
         return null;
