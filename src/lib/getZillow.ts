@@ -4,10 +4,8 @@ import { searchZillow } from "./zillow";
 
 export const getZillow = async (userInput: string) => {
     const query = await extractSearchQuery(userInput);
-
-    const jsonCleaned = query?.replace(/```json|```/g, "");
-
-    const searchQueryState = JSON.parse(jsonCleaned || '{}');
+    console.log(query);
+    const searchQueryState = JSON.parse(query || '{}');
 
     const encoded = await querystring.escape(JSON.stringify(searchQueryState));
 
