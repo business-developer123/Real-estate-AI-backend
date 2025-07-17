@@ -24,7 +24,6 @@ export const getMarket = async (results: any, userInput: string) => {
         });
 
         let snippets = googleResponse.data.items.map((item: any) => item.snippet);
-        // let googleData = await Promise.all(links.map((item: any) => fetchArticleText(item.link)));
 
         return {
             marketData: response.data,

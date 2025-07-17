@@ -283,8 +283,7 @@ Only answer what the user asked. Be systematic, friendly, and accurate.
 
     let description = completion.choices[0].message.content?.trim();
     let descriptionCleaned = description?.replace(/```json|```/g, '');
-    let descriptionCleanedFinal = descriptionCleaned?.replace(/\n/g, '<br />').replace(/[#*]/g, '');
-    return descriptionCleanedFinal;
+    return descriptionCleaned;
   } catch (error) {
     console.error('Error analyzing assistant:', error);
     return null;
@@ -381,7 +380,7 @@ When possible, refer to sources like:
 🚫 Do not skip downsides or gloss over risk  
 🚫 Do not imply high appreciation without specific evidence  
 
-> 📌 *Example*: In Phoenix, Tampa, and Austin, avoid outdated 2020–2022 boom assumptions. These markets have **normalized** — use caution when projecting appreciation.
+📌 *Example*: In Phoenix, Tampa, and Austin, avoid outdated 2020–2022 boom assumptions. These markets have **normalized** — use caution when projecting appreciation.
 
 ---
 
@@ -414,8 +413,7 @@ Write like a formal investment memo. Use:
     });
     let description = completion.choices[0].message.content?.trim();
     let descriptionCleaned = description?.replace(/```json|```/g, '');
-    let descriptionCleanedFinal = descriptionCleaned?.replace(/\n/g, '<br />').replace(/[#*-]/g, '');
-    return descriptionCleanedFinal;
+    return descriptionCleaned;
   } catch (error) {
     console.error('Error analyzing assistant:', error);
     return null;
