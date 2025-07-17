@@ -1,10 +1,13 @@
-import { listingAI } from "./assistant";
+import { analysisAI } from "./assistant";
+import { getMarket } from "./getMarket";
 import { getZillow } from "./getZillow";
 
 export const listingAssistant = async (userInput: string) => {
-    const results = await getZillow(userInput);
+    const basicData = await getZillow(userInput);
 
-    const description = await listingAI(userInput, results);
+    const marketData = await getMarket(basicData, userInput);
 
-    return { type: 'listing', description, results };
+    const description = await analysisAI(userInput, marketData, basicData);
+
+    return { type: 'listing', description, results: basicData };
 }

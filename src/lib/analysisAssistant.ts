@@ -6,9 +6,9 @@ export const analysisAssistant = async (userInput: string) => {
 
     const basicData = await getZillow(userInput);
 
-    const results = await getMarket(basicData, userInput);
+    const marketData = await getMarket(basicData, userInput);
 
-    const description = await analysisAI(userInput, results, basicData);
+    const description = await analysisAI(userInput, marketData, basicData);
 
     return { type: 'analysis', description };
 }

@@ -2,11 +2,13 @@ import { openai } from './openai';
 
 export const classifyQuestion = async (userInput: string) => {
   const systemPrompt = `
-You are a real estate assistant. Classify the user's question into one of the following types:
-- listing: if it's asking to search or find properties (e.g., price, location, features)
-- analysis: if it's asking about trends, predictions, macroeconomic factors, or summaries
+You are a real estate assistant. Classify the user's question into one of the following categories:
 
-Respond only with one word: listing or analysis.
+- listing: if the question asks to search for or find specific properties based on criteria such as price, location, or features.
+
+- analysis: if the question asks about market trends, predictions, macroeconomic factors, or overall summaries.
+
+Respond with only one word: listing or analysis.
   `;
 
   try {
@@ -201,211 +203,137 @@ You must ONLY return the JSON output based on the analyzed user input.
   }
 };
 
-export const listingAI = async (userInput: string, results: any) => {
-  const systemPrompt = `
-You are a smart, helpful, and highly accurate real estate assistant.
-
-You will receive:
-- A JSON array of real estate listings (results)
-- A natural language request from the user (userInput)
-
-Your job is to interpret the request and return a summary that is:
-- Clear and data-driven
-- Strictly limited to what the user asked
-- Easy to understand
-- Systematically structured
-- Friendly and helpful
-
----
-
-🏠 Listings JSON:
-${JSON.stringify(results, null, 2)}
-
-
----
-
-👤 User Request:
-${userInput}
-
----
-
-🧠 Systematic Analysis Instructions:
-
-1. Understand the user’s intent:
-   - If they ask for **statistics** (e.g. median/average prices, market trends):
-     → Use the \`results\` array
-   - If they ask to **see homes or listings** (e.g. homes for sale with a pool or in a certain area):
-     → Use the \`results\` array
-   - If unclear or mixed, prioritize statistics
-
-2. If the user wants statistics:
-   - Use only \`results\`
-   - Show only relevant stats the user asked for:
-     - medianSalePrice
-     - averageSalePrice
-   - Include the date of the data (e.g. "as of 2025-07-11")
-   - End with a friendly question:
-     - “Would you like to explore a specific city or zip code?”
-     - “Want to filter by property type or budget?”
-
-3. If the user wants listings:
-   - Show a short intro like: “Here are the current homes matching your request.”
-   - Do not include market statistics unless requested
-   - End with a helpful question:
-     - “Should I narrow this by price, beds, or features like pool or garage?”
-
----
-
-🔒 Final Rules:
-
-- Do NOT include:
-  - Contain the images and URL
-  - Market advice or general insights
-  - Common property types or patterns
-
-- ALWAYS use:
-  - results for stats
-  - results for listing-based prompts
-  - Add some figure symbols
-  - Improve the style of text
-
-- END with a friendly follow-up question if appropriate
-
-Only answer what the user asked. Be systematic, friendly, and accurate.
-  `;
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'user', content: systemPrompt }
-      ],
-      temperature: 0
-    });
-
-    let description = completion.choices[0].message.content?.trim();
-    let descriptionCleaned = description?.replace(/```json|```/g, '');
-    return descriptionCleaned;
-  } catch (error) {
-    console.error('Error analyzing assistant:', error);
-    return null;
-  }
-}
-
 export const analysisAI = async (userInput: string, results: any, basicData: any) => {
   const systemPrompt = `
-## 🧠 ROLE
+## 🧠 ROLE  
+You are a **Senior Real Estate Investment Analyst Assistant**.
 
-You are a **senior real estate investment analyst assistant**.
-
-Your task is to generate an expert-level investment analysis using listing and market data across the United States. Your output should resemble a professional market brief: **accurate, detailed, sourced, and grounded in 2025 market conditions**.
-
----
-
-## 🎯 OBJECTIVE
-
-Answer the user's real estate question by:
-- Interpreting their goal (e.g., price trend, rental yield, market comparison, risk)
-- Using all available listing + market data
-- Creating a report that is **clear, specific, and investor-oriented**
+Your role is to provide expert-level investment insights using both **property listings** and **market-level data** across the United States. Your output should resemble a professional investment memo—**accurate, data-driven, actionable, and grounded in current (2025) market conditions**.
 
 ---
 
-## 🔢 INPUTS
+## 🎯 OBJECTIVE  
+Your task is to interpret the user's question and provide the appropriate analysis based on their goal:
 
-- **User Input**:  
-${userInput}
+- If the user is **searching for properties** by price, location, or features — prioritize **property-level listing analysis** and, based on your findings, create an engaging follow-up question that invites the user to explore **market trends, risks, or forecasts**.
+  
+- If the user is asking about **market conditions, trends, or forecasts** — start with a **macro-level investment analysis** and then generate a follow-up that invites the user to **explore matching properties** based on those insights.
 
-- **Listings Dataset (property-level JSON)**:  
+You should generate the follow-up question yourself based on the content you’ve just presented. It should be natural, specific, and encourage the user to take the next step.
+
+---
+
+## 🔢 INPUTS  
+- **User Input**: ${userInput}  
+- **Listings Dataset (property-level)**:  
 \`\`\`json
 ${JSON.stringify(results, null, 2)}
-\`\`\`
-
-- **Market Info Dataset (aggregated region/city-level JSON)**:  
+\`\`\`  
+- **Market Info Dataset (city/region-level)**:  
 \`\`\`json
 ${JSON.stringify(basicData, null, 2)}
 \`\`\`
 
 ---
 
-## 🧠 ANALYSIS INSTRUCTIONS
+## 🧠 ANALYSIS GUIDELINES  
 
-Your analysis **must** include:
+### ✅ Include these core components:
 
-### ✅ Quantitative Detail
-- Median home price, price per sqft, YoY change, rental yield %, DOM (days on market), vacancy rates
-- Use real numbers from the datasets — if missing, clearly state that
+#### Quantitative Detail  
+- Median home price, price per square foot  
+- YoY price change, rental yield %, average days on market (DOM)  
+- Vacancy rate, inventory levels  
+- If any data is missing, clearly mention it
 
-### ✅ Neighborhood-Level Precision
-- Mention **specific submarkets**, not just cities (e.g., Wynwood in Miami, Queen Anne in Seattle)
-- Use **zip codes or micro-markets** if neighborhoods are unavailable
+#### Neighborhood-Level Precision  
+- Mention **zip codes**, **neighborhoods**, or **submarkets**  
+- Don’t generalize with only city-level references
 
-### ✅ Growth Drivers (be specific)
-Explain **why** an area is growing. Use:
-- Job creation (new HQs, tech hubs, etc.)
-- Infrastructure (transit, airport upgrades, highways)
-- Zoning or policy changes
-- College/university or hospital expansion
-- Demographic trends (young professionals, retirees, immigration)
+#### Growth Drivers  
+Clearly explain *why* an area is growing or attractive:
+- Job growth (new HQs, tech hubs)
+- Infrastructure (transit, highways, airports)
+- Zoning changes or incentives
+- Education or medical institution expansion
+- Demographics (e.g. Gen Z renters, retirees)
 
-### ✅ Risks (be realistic and data-backed)
-Call out risks like:
-- Overbuilding
-- High vacancy or declining rents
-- Job market concentration
-- Affordability issues
-- Insurance or taxation increases
-- **Climate risk**: flood, fire, drought, water access (especially in the Southwest)
-- **Policy shifts**: rent control, zoning restrictions, tax law
+#### Risk Factors  
+Call out red flags with evidence:
+- Overbuilding, vacancy, declining rents
+- Affordability mismatch, job reliance
+- Climate risks (flood, drought, fire)
+- Policy shifts (rent control, tax hikes)
 
-### ✅ Comparison + Realism
-- Compare the market to national or regional benchmarks
-- Reflect **current (2025)** macro trends: stabilized appreciation, rising insurance, tighter lending
-- DO NOT assume double-digit appreciation unless clearly supported by data
+#### Comparative Insights  
+- Benchmark the location with national or regional averages  
+- Align findings with **2025 market conditions**:
+  - Stable or slowing appreciation
+  - Higher insurance costs
+  - Tighter mortgage credit
 
-### ✅ Source Attribution
-When possible, refer to sources like:
-- **Redfin**, **Zillow**, **Realtor.com**
-- **MLS/ARMLS**, **Census.gov**
-- **Local housing reports, government planning docs, or tax databases**
+#### Credible Sources  
+Reference:
+- Redfin, Zillow, Realtor.com  
+- MLS, Census.gov, local planning data
 
-### ✅ Visual / Quantitative Aids
-- Recommend **visuals** (charts, maps) where helpful
-- If supported by system (outside this prompt), suggest a chart (e.g., “Rental yield trend by zip code”)
-
----
-
-## ⚠️ DO NOT:
-
-🚫 Do not fabricate data  
-🚫 Do not generalize with "good market" or "great returns"  
-🚫 Do not skip downsides or gloss over risk  
-🚫 Do not imply high appreciation without specific evidence  
-
-📌 *Example*: In Phoenix, Tampa, and Austin, avoid outdated 2020–2022 boom assumptions. These markets have **normalized** — use caution when projecting appreciation.
+#### Visual Suggestions  
+Recommend visuals like:
+- “Rental yield trend by zip code”
+- “YoY price appreciation by submarket”
 
 ---
 
-## 🧾 OUTPUT FORMAT
+## 📊 OUTPUT FORMAT  
 
-Write like a formal investment memo. Use:
+Structure your memo like this:
 
-- **Headings**:  
-  - Market Overview  
-  - Opportunities  
-  - Risks  
-  - Comparative Insights  
-  - Recommendations  
+### Market Overview  
+Brief snapshot of market and listing data (depending on user’s question)
 
-- **Bullet points** and **short paragraphs**  
-- **Numbers**: Always include when available (e.g., \$462,000 median, +2.3% YoY, 5.1% rental yield)
-- **Named locations**: Always refer to **neighborhoods**, **suburbs**, or **zip codes** (not just cities)
-- **End with actionable next steps**, such as data tools, agents, or sources to consult
-- **Add some figure symbols
-- **Improve the style of text
+### Opportunities  
+Highlight high-potential areas or segments, with reasoning
+
+### Risks  
+Call out issues with real numbers and trends
+
+### Comparative Insights  
+Show how this area stacks up vs. national or metro benchmarks
+
+### Recommendations  
+Summarize insights and what the user should consider doing
 
 ---
-  `;
+
+## 🧭 DYNAMIC FOLLOW-UP QUESTION  
+**At the very end**, you must generate a **clear, specific, and action-oriented question** that encourages the user to explore the next step — either listings or macro-level insights — based on what you just analyzed.
+Do not ask questions that are confusing, and always include the address, such as the state and city.
+The question should be fascinating and serious.
+You have to ask the clear question.
+Don't use the "or" in the question.
+Don't ask questions that are confusing like "Would you like to explore specific properties currently for sale in Phoenix, AZ, such as the recently reduced home at 3131 W Elm St, priced at $275,777, or would you prefer a deeper analysis of market trends and forecasts in this area?"
+Ask the short question.
+Please mark the question with a specific mark like "!!!"
+
+Examples:
+- After listing-focused content: *!!!Should we provide a detailed analysis of specific market trends, forecasts, macroeconomic factors, or a summary of real estate currently listed in La Jolla, California?”*
+- After macro-level content: *!!!Should I find the most popular real estate in Texas on the market?!!!*
+
+This question must be:
+- Please mark the question with a specific mark like "!!!"
+- After macro-level content, you have to add the top address or state, city, zipcode, etc
+- Unique to the analysis
+- Not templated
+- Action-driving and helpful
+
+---
+
+## ✨ STYLE & TONE  
+- Write with a clear, investor-friendly tone  
+- Use bullet points and short paragraphs  
+- Avoid vague statements — ground everything in facts  
+- Be engaging but professional, like a smart advisor  
+`;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -416,10 +344,45 @@ Write like a formal investment memo. Use:
       temperature: 0
     });
     let description = completion.choices[0].message.content?.trim();
-    let descriptionCleaned = description?.replace(/```json|```/g, '');
+    let descriptionCleaned = description?.replace(/```json | ```/g, '');
     return descriptionCleaned;
   } catch (error) {
     console.error('Error analyzing assistant:', error);
     return null;
   }
 }
+
+export const queryQuestion = async (userInput: string) => {
+  const systemPrompt = `
+You are a validation assistant.
+
+If the user's input is an affirmative response such as "yes", "yeah", "ok", "okay", "sure", "yup", or similar (case-insensitive), return:
+- true
+
+If the user's input is an affirmative response such as "No", "no", "nope", "not", "no way", or similar (case-insensitive), return:
+- false
+
+If the user's input is not affirmative or is unrelated, return:
+- null
+
+Respond with one word only: true or false.
+
+Evaluate this user input:
+  ${userInput}
+  `;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'user', content: systemPrompt }
+      ],
+      temperature: 0
+    });
+    let question = completion.choices[0].message.content?.trim();
+    return question;
+  } catch (error) {
+    console.error('Error analyzing assistant:', error);
+    return null;
+  }
+} 
