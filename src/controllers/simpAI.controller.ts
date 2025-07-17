@@ -1,5 +1,5 @@
 import { json, Request, Response } from 'express';
-import { classifyQuestion } from '../lib/assistant';
+import { classifyQuestion, queryQuestion } from '../lib/assistant';
 import { listingAssistant } from '../lib/listingAssistant';
 import axios from 'axios';
 import { analysisAssistant } from '../lib/analysisAssistant';
@@ -19,18 +19,34 @@ const extractPdfText = async (buffer: Buffer): Promise<string> => {
 };
 
 export const analyzeProperty = async (req: Request, res: Response) => {
+    let inputData = '';
     try {
-        const { userInput } = req.body;
+        const { userInput, lastQuestion } = req.body;
 
-        const classifyResult = await classifyQuestion(userInput);
+        inputData = userInput;
+        console.log(lastQuestion);
+        if (lastQuestion) {
+            const question = await queryQuestion(userInput);
+            console.log(question);
+            if (question === 'true') {
+                inputData = lastQuestion;
+            } else if (question === 'false') {
+                res.status(200).json({ description: 'Then ask a question again!', type: "noMessage" });
+                return;
+            } else {
+                inputData = userInput;
+            }
+        }
+
+        const classifyResult = await classifyQuestion(inputData);
 
         switch (classifyResult) {
             case 'listing':
-                const listingResult = await listingAssistant(userInput);
+                const listingResult = await listingAssistant(inputData);
                 res.status(200).json(listingResult);
                 break;
             case 'analysis':
-                const analysisResult = await analysisAssistant(userInput);
+                const analysisResult = await analysisAssistant(inputData);
                 res.status(200).json(analysisResult);
                 break;
             default:
