@@ -24,10 +24,10 @@ export const analyzeProperty = async (req: Request, res: Response) => {
         const { userInput, lastQuestion } = req.body;
 
         inputData = userInput;
-        console.log(lastQuestion);
+
         if (lastQuestion) {
             const question = await queryQuestion(userInput);
-            console.log(question);
+
             if (question === 'true') {
                 inputData = lastQuestion;
             } else if (question === 'false') {
