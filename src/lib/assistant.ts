@@ -343,3 +343,24 @@ Now use this structure to analyze the given input. Respond like a smart investme
     return null;
   }
 }
+
+export const analysisReport = async (data: any) => {
+  const prompt = `
+    
+  `;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0
+    })
+    let question = completion.choices[0].message.content?.trim();
+    return question;
+  } catch (error) {
+    console.error("Error analyzing report: ", error);
+    return null;
+  }
+}

@@ -1,11 +1,13 @@
 import { json, Request, Response } from 'express';
-import { classifyQuestion, queryQuestion } from '../lib/assistant';
+import { analysisReport, classifyQuestion, queryQuestion } from '../lib/assistant';
 import { listingAssistant } from '../lib/listingAssistant';
 import axios from 'axios';
 import { analysisAssistant } from '../lib/analysisAssistant';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
 import pdf from 'pdf-parse';
+import { getData, getOneHistory, saveData, updateData } from '../lib/realEstateData';
+import { supabase } from '../utils/supabase';
 
 // For PDF processing, use pdf-parse library
 const extractPdfText = async (buffer: Buffer): Promise<string> => {
@@ -21,7 +23,7 @@ const extractPdfText = async (buffer: Buffer): Promise<string> => {
 export const analyzeProperty = async (req: Request, res: Response) => {
     let inputData = '';
     try {
-        const { userInput, lastQuestion } = req.body;
+        const { userInput, lastQuestion, id } = req.body;
 
         inputData = userInput;
 
@@ -43,11 +45,13 @@ export const analyzeProperty = async (req: Request, res: Response) => {
         switch (classifyResult) {
             case 'listing':
                 const listingResult = await listingAssistant(inputData);
-                res.status(200).json(listingResult);
+                if (id) res.status(200).json(await updateData(id, listingResult));
+                else res.status(200).json(await saveData(listingResult));
                 break;
             case 'analysis':
                 const analysisResult = await analysisAssistant(inputData);
-                res.status(200).json(analysisResult);
+                if (id) res.status(200).json(await updateData(id, analysisResult));
+                else res.status(200).json(await saveData(analysisResult));
                 break;
             default:
                 res.status(400).json({ message: 'Invalid question type' });
@@ -130,4 +134,34 @@ export const analyzeFile = async (req: Request, res: Response) => {
     } catch (error) {
         res.status(500).json({ error: 'Failed to analyze property' });
     }
-};   
+};
+
+export const getHistories = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.query;
+        const response = await getData(email as string);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(500).json("Get history error!");
+    }
+}
+
+export const getHistory = async (req: Request, res: Response) => {
+    const { id } = req.query;
+    try {
+        const response = await getOneHistory(id as string);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(500).json("Get a history error!");
+    }
+}
+
+export const getReport = async (req: Request, res: Response) => {
+    const { listing } = req.body;
+    try {
+        const response = await analysisReport(listing);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(500).json("Get report error!");
+    }
+}
