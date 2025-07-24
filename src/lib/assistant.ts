@@ -392,6 +392,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - Make the content ready to be directly inserted into a PDF template
 - Do NOT include any <html>, <body>, or <head> tags
 - Start directly with content tags like <h2>Property Overview</h2>
+- Do Not include any images, videos, or other media in the report
 
 Make the analysis data-driven, professional, and actionable for real estate investors.
   `;
