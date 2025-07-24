@@ -1,4 +1,4 @@
-import { json, Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { analysisReport, classifyQuestion, queryQuestion } from '../lib/assistant';
 import { listingAssistant } from '../lib/listingAssistant';
 import axios from 'axios';
@@ -7,7 +7,6 @@ import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
 import pdf from 'pdf-parse';
 import { getData, getOneHistory, saveData, updateData } from '../lib/realEstateData';
-import { supabase } from '../utils/supabase';
 import puppeteer from 'puppeteer';
 
 // For PDF processing, use pdf-parse library
@@ -21,7 +20,7 @@ const extractPdfText = async (buffer: Buffer): Promise<string> => {
     }
 };
 
-export const analyzeProperty = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const analyzeProperty = async (req: Request, res: Response) => {
     let inputData = '';
     try {
         const { userInput, lastQuestion, id } = req.body;
@@ -64,7 +63,7 @@ export const analyzeProperty = async (req: Request, res: Response, next: NextFun
     }
 };
 
-export const getStreetView = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getStreetView = async (req: Request, res: Response) => {
     try {
         const { location } = req.body;
         const response = await axios.get(location);
@@ -75,7 +74,7 @@ export const getStreetView = async (req: Request, res: Response, next: NextFunct
     }
 };
 
-export const analyzeFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const analyzeFile = async (req: Request, res: Response) => {
     let document = '';
     try {
         const file = req.file;
@@ -137,7 +136,7 @@ export const analyzeFile = async (req: Request, res: Response, next: NextFunctio
     }
 };
 
-export const getHistories = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getHistories = async (req: Request, res: Response) => {
     try {
         const { email } = req.query;
         const response = await getData(email as string);
@@ -147,7 +146,7 @@ export const getHistories = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-export const getHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getHistory = async (req: Request, res: Response) => {
     const { id } = req.query;
     try {
         const response = await getOneHistory(id as string);
@@ -157,7 +156,7 @@ export const getHistory = async (req: Request, res: Response, next: NextFunction
     }
 };
 
-export const getReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getReport = async (req: Request, res: Response) => {
     const { listing } = req.body;
     try {
         // Get the analysis from OpenAI
