@@ -330,27 +330,65 @@ export const getReport = async (req: Request, res: Response) => {
         </html>
         `;
 
-        // Generate PDF using Puppeteer
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+        // Generate PDF using Puppeteer with cloud deployment support
+        let browser;
+        let pdfBuffer: Uint8Array;
 
-        const page = await browser.newPage();
-        await page.setContent(htmlTemplate, { waitUntil: 'networkidle0' });
+        try {
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process',
+                    '--disable-gpu',
+                    '--disable-extensions',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding'
+                ],
+                // Use bundled Chromium or installed Chrome
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+                timeout: 60000 // 60 second timeout
+            });
 
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '20px',
-                right: '20px',
-                bottom: '20px',
-                left: '20px'
+            const page = await browser.newPage();
+
+            // Set viewport and user agent for better compatibility
+            await page.setViewport({ width: 1280, height: 720 });
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+
+            await page.setContent(htmlTemplate, {
+                waitUntil: 'networkidle0',
+                timeout: 30000
+            });
+
+            pdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                preferCSSPageSize: true,
+                margin: {
+                    top: '20px',
+                    right: '20px',
+                    bottom: '20px',
+                    left: '20px'
+                }
+            });
+
+            await browser.close();
+
+        } catch (error) {
+            console.error("Puppeteer error:", error);
+            if (browser) {
+                await browser.close();
             }
-        });
-
-        await browser.close();
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            throw new Error(`PDF generation failed: ${errorMessage}`);
+        }
 
         // Set response headers for PDF download
         const fileName = `property-report-${listing.streetAddress?.replace(/\s+/g, '-') || 'property'}-${Date.now()}.pdf`;
