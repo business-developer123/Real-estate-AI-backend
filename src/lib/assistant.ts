@@ -346,7 +346,54 @@ Now use this structure to analyze the given input. Respond like a smart investme
 
 export const analysisReport = async (data: any) => {
   const prompt = `
-    
+You are a comprehensive real estate analysis expert. Generate a detailed property report based on the following property data:
+
+Property Information:
+${JSON.stringify(data, null, 2)}
+
+Please provide a professional property analysis report that includes:
+
+1. **Property Overview**
+   - Property address and basic details
+   - Property type and key features
+   - Current listing price and market positioning
+
+2. **Market Analysis**
+   - Comparable properties in the area
+   - Price per square foot analysis
+   - Local market trends
+
+3. **Financial Analysis**
+   - Estimated monthly mortgage payment (assuming 20% down)
+   - Property tax estimates
+   - Potential rental income analysis
+   - Investment ROI calculations
+
+4. **Location Analysis**
+   - Neighborhood characteristics
+   - School district information
+   - Nearby amenities and transportation
+
+5. **Risk Assessment**
+   - Market volatility factors
+   - Potential appreciation or depreciation risks
+   - Recommended holding period
+
+6. **Investment Recommendation**
+   - Buy/Hold/Avoid recommendation with reasoning
+   - Target purchase price range
+   - Exit strategy suggestions
+
+IMPORTANT FORMATTING REQUIREMENTS:
+- Return ONLY clean HTML content without any markdown code blocks
+- Do NOT include \`\`\`html or \`\`\` markers
+- Use proper HTML tags: <h2>, <h3>, <p>, <ul>, <li>, <table>, etc.
+- Include tables for financial calculations where appropriate
+- Make the content ready to be directly inserted into a PDF template
+- Do NOT include any <html>, <body>, or <head> tags
+- Start directly with content tags like <h2>Property Overview</h2>
+
+Make the analysis data-driven, professional, and actionable for real estate investors.
   `;
 
   try {
@@ -358,6 +405,14 @@ export const analysisReport = async (data: any) => {
       temperature: 0
     })
     let question = completion.choices[0].message.content?.trim();
+
+    // Clean up any remaining markdown code blocks
+    if (question) {
+      question = question.replace(/```html\s*/g, '');
+      question = question.replace(/```\s*/g, '');
+      question = question.trim();
+    }
+
     return question;
   } catch (error) {
     console.error("Error analyzing report: ", error);
