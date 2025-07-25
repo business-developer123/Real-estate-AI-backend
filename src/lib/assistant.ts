@@ -367,10 +367,12 @@ Please provide a professional property analysis report that includes:
    - Current listing price from the actual data
 
 2. **Market Analysis**
-   - Comparable Properties in the Area: List ONLY the actual properties from the data with their REAL addresses
+   - Comparable Properties in the Area: List at least 3 comparable properties from the data with their REAL addresses
+   - If fewer than 3 properties are available in the data, use all available properties and note the limited sample size
    - Format each as: "• [REAL ADDRESS]: [actual beds] beds, [actual baths] baths, [actual sq ft] sq ft, Listed at [actual price]"
    - Price per square foot analysis using the real property data
    - Local market trends based on the provided data
+   - Comparative analysis showing how the subject property compares to these comps
 
 3. **Financial Analysis**
    - Use ACTUAL property prices from the data for calculations
