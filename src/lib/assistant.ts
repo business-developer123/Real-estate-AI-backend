@@ -346,31 +346,41 @@ Now use this structure to analyze the given input. Respond like a smart investme
 
 export const analysisReport = async (data: any) => {
   const prompt = `
-You are a comprehensive real estate analysis expert. Generate a detailed property report based on the following property data:
+You are a comprehensive real estate analysis expert. Generate a detailed property report based on the following REAL property data:
 
 Property Information:
 ${JSON.stringify(data, null, 2)}
 
+CRITICAL INSTRUCTIONS - USE ONLY REAL DATA:
+- You MUST use ONLY the actual property data provided in the JSON above
+- DO NOT create fictional properties like "Property A", "Property B", "Property C"
+- DO NOT invent addresses, prices, or property details
+- If the data contains an array of properties/results, use the ACTUAL addresses and details from that array
+- For comparable properties, use the real property listings from the data provided
+- All addresses, prices, bedrooms, bathrooms, and square footage MUST come from the actual data
+
 Please provide a professional property analysis report that includes:
 
 1. **Property Overview**
-   - Property address and basic details
-   - Property type and key features
-   - Current listing price and market positioning
+   - Use the ACTUAL property address and details from the data
+   - Property type and key features from the real data
+   - Current listing price from the actual data
 
 2. **Market Analysis**
-   - Comparable properties in the area
-   - Price per square foot analysis
-   - Local market trends
+   - Comparable Properties in the Area: List ONLY the actual properties from the data with their REAL addresses
+   - Format each as: "• [REAL ADDRESS]: [actual beds] beds, [actual baths] baths, [actual sq ft] sq ft, Listed at [actual price]"
+   - Price per square foot analysis using the real property data
+   - Local market trends based on the provided data
 
 3. **Financial Analysis**
+   - Use ACTUAL property prices from the data for calculations
    - Estimated monthly mortgage payment (assuming 20% down)
    - Property tax estimates
    - Potential rental income analysis
    - Investment ROI calculations
 
 4. **Location Analysis**
-   - Neighborhood characteristics
+   - Neighborhood characteristics based on the actual location data
    - School district information
    - Nearby amenities and transportation
 
@@ -381,10 +391,13 @@ Please provide a professional property analysis report that includes:
 
 6. **Investment Recommendation**
    - Buy/Hold/Avoid recommendation with reasoning
-   - Target purchase price range
+   - Target purchase price range based on actual market data
    - Exit strategy suggestions
 
-IMPORTANT FORMATTING REQUIREMENTS:
+CRITICAL FORMATTING REQUIREMENTS:
+- Use ONLY the real property data provided - NO fictional data
+- For comparable properties, use the exact addresses and details from the data
+- DO NOT create "Property A/B/C" - use real street addresses
 - Return ONLY clean HTML content without any markdown code blocks
 - Do NOT include \`\`\`html or \`\`\` markers
 - Use proper HTML tags: <h2>, <h3>, <p>, <ul>, <li>, <table>, etc.
@@ -394,7 +407,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - Start directly with content tags like <h2>Property Overview</h2>
 - Do Not include any images, videos, or other media in the report
 
-Make the analysis data-driven, professional, and actionable for real estate investors.
+Make the analysis data-driven, professional, and actionable for real estate investors using ONLY the real property data provided.
   `;
 
   try {

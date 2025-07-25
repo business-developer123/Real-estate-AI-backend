@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 1001;
 const corsOptions = {
-  origin: 'https://real-estate-ai-frontend.vercel.app', // Allow all origins
+  origin: '*', // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'FETCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
