@@ -59,3 +59,22 @@ export const getMarketData = async (results: any, userInput: string) => {
         return null;
     }
 };
+
+export const getDataByAddress = async (address: string) => {
+    try {
+        const response = await axios.get(`https://zillow56.p.rapidapi.com/search_address`, {
+            headers: {
+                'x-rapidapi-key': "2e5dd68fe7mshd661c7de69087c4p153130jsn820b372673ae",
+                'x-rapidapi-host': 'zillow56.p.rapidapi.com'
+            },
+            params: {
+                address: address,
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Error getting data by address:', error);
+        return null;
+    }
+}

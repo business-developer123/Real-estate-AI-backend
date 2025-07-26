@@ -8,6 +8,7 @@ import mammoth from 'mammoth';
 import pdf from 'pdf-parse';
 import { getData, getOneHistory, saveData, updateData } from '../lib/realEstateData';
 import puppeteer from 'puppeteer';
+import { getDataByAddress } from '../lib/zillow';
 
 // For PDF processing, use pdf-parse library
 const extractPdfText = async (buffer: Buffer): Promise<string> => {
@@ -159,8 +160,10 @@ export const getHistory = async (req: Request, res: Response) => {
 export const getReport = async (req: Request, res: Response) => {
     const { listing } = req.body;
     try {
+        const data = await getDataByAddress(listing.streetAddress + " " + listing.city + " " + listing.state + " " + listing.zipcode)
         // Get the analysis from OpenAI
-        const analysisResult = await analysisReport(listing);
+        const analysisResult = await analysisReport(data);
+        console.log(analysisResult)
 
         if (!analysisResult) {
             res.status(500).json({ error: "Failed to generate analysis" });
