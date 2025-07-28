@@ -163,7 +163,6 @@ export const getReport = async (req: Request, res: Response) => {
         const data = await getDataByAddress(listing.streetAddress + " " + listing.city + " " + listing.state + " " + listing.zipcode)
         // Get the analysis from OpenAI
         const analysisResult = await analysisReport(data);
-        console.log(analysisResult)
 
         if (!analysisResult) {
             res.status(500).json({ error: "Failed to generate analysis" });

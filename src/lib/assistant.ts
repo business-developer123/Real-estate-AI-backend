@@ -345,19 +345,37 @@ Now use this structure to analyze the given input. Respond like a smart investme
 }
 
 export const analysisReport = async (data: any) => {
+  let taxData = null;
+  const formData = new FormData();
+  formData.append('ud-current-location', `CITY|${data.city}|${data.state}`);
+  const getTaxData = async () => {
+    const response = await fetch(`https://smartasset.com/taxes/property-taxes?render=json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: formData
+    });
+    const data = await response.json();
+    taxData = data;
+  }
+  await getTaxData();
   const prompt = `
 You are a comprehensive real estate analysis expert. Generate a detailed property report based on the following REAL property data:
 
 Property Information:
 ${JSON.stringify(data, null, 2)}
 
+Property Tax Data (from authoritative tax API):
+${JSON.stringify(taxData, null, 2)}
+
 CRITICAL INSTRUCTIONS - USE ONLY REAL DATA:
-- You MUST use ONLY the actual property data provided in the JSON above
+- You MUST use ONLY the actual property data and tax data provided in the JSON above
 - DO NOT create fictional properties like "Property A", "Property B", "Property C"
-- DO NOT invent addresses, prices, or property details
+- DO NOT invent addresses, prices, property details, or tax values
 - If the data contains an array of properties/results, use the ACTUAL addresses and details from that array
 - For comparable properties, use the real property listings from the data provided
-- All addresses, prices, bedrooms, bathrooms, and square footage MUST come from the actual data
+- All addresses, prices, bedrooms, bathrooms, square footage, and property tax values MUST come from the actual data
 
 Please provide a professional property analysis report that includes:
 
@@ -377,7 +395,7 @@ Please provide a professional property analysis report that includes:
 3. **Financial Analysis**
    - Use ACTUAL property prices from the data for calculations
    - Estimated monthly mortgage payment (assuming 20% down)
-   - Property tax estimates
+   - Property tax estimates: You MUST use the actual property tax data provided in the 'Property Tax Data' JSON above. Do NOT estimate or invent tax values—use only the API data.
    - Potential rental income analysis
    - Investment ROI calculations
 
@@ -397,7 +415,7 @@ Please provide a professional property analysis report that includes:
    - Exit strategy suggestions
 
 CRITICAL FORMATTING REQUIREMENTS:
-- Use ONLY the real property data provided - NO fictional data
+- Use ONLY the real property and tax data provided - NO fictional data
 - For comparable properties, use the exact addresses and details from the data
 - DO NOT create "Property A/B/C" - use real street addresses
 - Return ONLY clean HTML content without any markdown code blocks
@@ -409,7 +427,7 @@ CRITICAL FORMATTING REQUIREMENTS:
 - Start directly with content tags like <h2>Property Overview</h2>
 - Do Not include any images, videos, or other media in the report
 
-Make the analysis data-driven, professional, and actionable for real estate investors using ONLY the real property data provided.
+Make the analysis data-driven, professional, and actionable for real estate investors using ONLY the real property and tax data provided.
   `;
 
   try {
