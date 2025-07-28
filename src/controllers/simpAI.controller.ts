@@ -335,7 +335,7 @@ export const getReport = async (req: Request, res: Response) => {
         // Generate PDF using Puppeteer with cloud deployment support
         let browser;
         let pdfBuffer: Uint8Array;
-
+        console.log(htmlTemplate);
         try {
             browser = await puppeteer.launch({
                 headless: true,
