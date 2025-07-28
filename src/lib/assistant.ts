@@ -345,7 +345,7 @@ Now use this structure to analyze the given input. Respond like a smart investme
 }
 
 export const analysisReport = async (data: any) => {
-  let taxData = null;
+  let taxData: any = null;
   const formData = new FormData();
   formData.append('ud-current-location', `CITY|${data.city}|${data.state}`);
   const getTaxData = async () => {
@@ -366,8 +366,8 @@ You are a comprehensive real estate analysis expert. Generate a detailed propert
 Property Information:
 ${JSON.stringify(data, null, 2)}
 
-Property Tax Data (from authoritative tax API):
-${JSON.stringify(taxData, null, 2)}
+City Tax Data (from authoritative tax API):
+${JSON.stringify(taxData.page_data, null, 2)}
 
 CRITICAL INSTRUCTIONS - USE ONLY REAL DATA:
 - You MUST use ONLY the actual property data and tax data provided in the JSON above
@@ -376,12 +376,14 @@ CRITICAL INSTRUCTIONS - USE ONLY REAL DATA:
 - If the data contains an array of properties/results, use the ACTUAL addresses and details from that array
 - For comparable properties, use the real property listings from the data provided
 - All addresses, prices, bedrooms, bathrooms, square footage, and property tax values MUST come from the actual data
+- For tax information, use the actual tax rates, effective rates, and tax-related data directly from the City Tax Data JSON. Do NOT perform calculations - use the tax data as provided in the API response.
 
 Please provide a professional property analysis report that includes:
 
 1. **Property Overview**
    - Use the ACTUAL property address and details from the data
-   - Property type and key features from the real data
+   - Property type (single-family, multifamily, commercial, mixed-use, land, etc.) and key features from the real data
+   - Suitability for investment strategies: fix & flip, buy & hold, short-term rental, ground-up construction, etc.
    - Current listing price from the actual data
 
 2. **Market Analysis**
@@ -389,30 +391,41 @@ Please provide a professional property analysis report that includes:
    - If fewer than 3 properties are available in the data, use all available properties and note the limited sample size
    - Format each as: "[REAL ADDRESS]: [actual beds] beds, [actual baths] baths, [actual sq ft] sq ft, Listed at [actual price]"
    - Price per square foot analysis using the real property data
-   - Local market trends based on the provided data
+   - Local market trends based on the provided data (crime rate, walkability, school ratings, amenities, gentrification or decline, new developments or infrastructure)
    - Comparative analysis showing how the subject property compares to these comps
+   - Sales comps over past 6–12 months and expected appreciation rate in this zip code or metro area
 
 3. **Financial Analysis**
    - Use ACTUAL property prices from the data for calculations
    - Estimated monthly mortgage payment (assuming 20% down)
-   - Property tax estimates: You MUST use the actual property tax data provided in the 'Property Tax Data' JSON above. Do NOT estimate or invent tax values—use only the API data.
-   - Potential rental income analysis
-   - Investment ROI calculations
+   - Property tax information: You MUST use the actual property tax data provided in the 'City Tax Data' JSON above. Use the tax rates, effective rates, and any other tax-related information directly from the API data. Do NOT calculate or estimate tax values—use only the real API data provided as-is.
+   - Insurance, utilities, HOA fees, maintenance costs
+   - Potential rental income analysis (market rent for comparable units, occupancy rates, seasonal/vacation rental income potential)
+   - Investment ROI calculations (monthly cash flow, cap rate, cash-on-cash return, IRR for longer-term)
 
 4. **Location Analysis**
    - Neighborhood characteristics based on the actual location data
-   - School district information
+   - School district information: Include the source name (e.g., "GreatSchools", "SchoolDigger") and specify the rating scale (e.g., "5 out of 5" or "5 out of 10") for any school ratings mentioned
    - Nearby amenities and transportation
+   - Local economy and job market (major employers, population growth or decline)
 
 5. **Risk Assessment**
    - Market volatility factors
    - Potential appreciation or depreciation risks
    - Recommended holding period
+   - Flood zone or natural hazard areas
+   - Economic risks (interest rate spikes, job loss in area)
+   - Regulatory risks (rent control, eviction laws)
 
 6. **Investment Recommendation**
    - Buy/Hold/Avoid recommendation with reasoning
    - Target purchase price range based on actual market data
-   - Exit strategy suggestions
+   - Exit strategy suggestions (resale potential, likely buyer types)
+   - Title & ownership (any liens, encroachments, or disputes; clean title and insurable)
+   - Zoning & permits (conversion, redevelopment, or expansion potential; short-term rental allowance)
+   - Tenants & lease status if occupied (current lease terms, security deposits, rent rolls, month-to-month or long-term)
+
+Make sure to OMIT any sections, bullet points, or data fields for which there is no real data available. Only display information that exists in the provided property and tax data. Do not display placeholders, empty fields, or mention unavailable data.
 
 CRITICAL FORMATTING REQUIREMENTS:
 - Use ONLY the real property and tax data provided - NO fictional data
