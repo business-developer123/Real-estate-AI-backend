@@ -1,4 +1,5 @@
 import { openai } from './openai';
+import { analyseZillowData } from '../utils/analyseZilllowData';
 
 export const queryQuestion = async (userInput: string) => {
   const systemPrompt = `
@@ -345,6 +346,8 @@ Now use this structure to analyze the given input. Respond like a smart investme
 }
 
 export const analysisReport = async (data: any) => {
+  const analyseData = await analyseZillowData(data);
+
   let taxData: any = null;
   const formData = new FormData();
   formData.append('ud-current-location', `CITY|${data.city}|${data.state}`);
@@ -364,7 +367,7 @@ export const analysisReport = async (data: any) => {
 You are a comprehensive real estate analysis expert. Generate a detailed property report based on the following REAL property data:
 
 Property Information:
-${JSON.stringify(data, null, 2)}
+${JSON.stringify(analyseData, null, 2)}
 
 City Tax Data (from authoritative tax API):
 ${JSON.stringify(taxData.page_data, null, 2)}
@@ -383,46 +386,73 @@ Please provide a professional property analysis report that includes:
 1. **Property Overview**
    - Use the ACTUAL property address and details from the data
    - Property type (single-family, multifamily, commercial, mixed-use, land, etc.) and key features from the real data
+   - Lot size, zoning restrictions, garage, pool, and other notable features if available in the data
    - Suitability for investment strategies: fix & flip, buy & hold, short-term rental, ground-up construction, etc.
+   - Layout and flow—comment on the layout and flow of the property and its appeal to renters or buyers, based on the available data or description. If not available, explain why this is important for investment decisions.
    - Current listing price from the actual data
+   - Indicate whether the property is listed under or above market value, based on the available data. If not available, explain why this is important for investment decisions.
+   - After-Repair Value (ARV)—estimate the ARV if renovation is considered, using available data or comps. If not available, explain why ARV is important for investment decisions.
 
-2. **Market Analysis**
+2. **Renovations & Deferred Maintenance**
+   - Review the property description (${analyseData.description}) for keywords such as "renovations", "improvements", or similar. If found, summarize the relevant details about recent renovations or improvements.
+   - If no such keywords or details are found in ${analyseData.description}, inform the user that no information about recent renovations or improvements is available, and explain why knowing about them is important for investment decisions.
+   - For deferred maintenance, advise the user to obtain a professional appraisal to identify any deferred maintenance issues, and explain why this is important for assessing the property's true condition and investment risk.
+   - Only display information that exists in the provided data; do not invent or assume details.
+
+3. **Inspection Reports (Foundation, Pests, Mold, etc.)**
+   - Review the property facts (${JSON.stringify(analyseData.resoFacts)}) for any available inspection report data (foundation, pests, mold, etc.). Summarize the relevant details if found.
+   - If no explicit inspection report data is found, analyze the available data in ${JSON.stringify(analyseData.resoFacts)} and display any relevant findings, even if not labeled as an inspection report.
+   - If nothing relevant is found, inform the user and explain why inspection reports are important for investment decisions.
+   - Only display information that exists in the provided data; do not invent or assume details.
+
+4. **Market Analysis**
    - Comparable Properties in the Area: List at least 3 comparable properties from the data with their REAL addresses
    - If fewer than 3 properties are available in the data, use all available properties and note the limited sample size
    - Format each as: "[REAL ADDRESS]: [actual beds] beds, [actual baths] baths, [actual sq ft] sq ft, Listed at [actual price]"
    - Price per square foot analysis using the real property data
    - Local market trends based on the provided data (crime rate, walkability, school ratings, amenities, gentrification or decline, new developments or infrastructure)
+   - Gentrification or decline? New developments or infrastructure?
    - Comparative analysis showing how the subject property compares to these comps
    - Sales comps over past 6–12 months and expected appreciation rate in this zip code or metro area
+   - Expected appreciation rate in this zip code or metro area.
+   - Are employers moving in or out?
+   - Population growth or decline?
 
-3. **Financial Analysis**
+5. **Financial Analysis**
    - Use ACTUAL property prices from the data for calculations
    - Estimated monthly mortgage payment (assuming 20% down)
    - Property tax information: You MUST use the actual property tax data provided in the 'City Tax Data' JSON above. Use the tax rates, effective rates, and any other tax-related information directly from the API data. Do NOT calculate or estimate tax values—use only the real API data provided as-is.
    - Insurance, utilities, HOA fees, maintenance costs
+   - Market rent for comparable units (Rent comps).
+   - Occupancy rates in the area.
+   - Seasonal or vacation rental income potential.
    - Potential rental income analysis (market rent for comparable units, occupancy rates, seasonal/vacation rental income potential)
    - Investment ROI calculations (monthly cash flow, cap rate, cash-on-cash return, IRR for longer-term)
 
-4. **Location Analysis**
+6. **Location Analysis**
    - Neighborhood characteristics based on the actual location data
    - School district information: Include the source name (e.g., "GreatSchools", "SchoolDigger") and specify the rating scale (e.g., "5 out of 5" or "5 out of 10") for any school ratings mentioned
    - Nearby amenities and transportation
    - Local economy and job market (major employers, population growth or decline)
 
-5. **Risk Assessment**
+7. **Risk Assessment**
    - Market volatility factors
    - Potential appreciation or depreciation risks
    - Recommended holding period
-   - Flood zone or natural hazard areas
-   - Economic risks (interest rate spikes, job loss in area)
-   - Regulatory risks (rent control, eviction laws)
+   - Flood zone or natural hazard areas?
+   - Economic risks (interest rate spikes, job loss in area)?
+   - Regulatory risks (rent control, eviction laws)?
 
-6. **Investment Recommendation**
+8. **Investment Recommendation**
    - Buy/Hold/Avoid recommendation with reasoning
    - Target purchase price range based on actual market data
    - Exit strategy suggestions (resale potential, likely buyer types)
-   - Title & ownership (any liens, encroachments, or disputes; clean title and insurable)
+   - Any liens, encroachments, or disputes?
+   - Clean title and insurable?
    - Zoning & permits (conversion, redevelopment, or expansion potential; short-term rental allowance)
+   - Can the property be converted, redeveloped, or expanded?
+   - Are short-term rentals allowed?
+   - Exit Options: Can you sell it quickly if needed? Who’s your buyer?
    - Tenants & lease status if occupied (current lease terms, security deposits, rent rolls, month-to-month or long-term)
 
 Make sure to OMIT any sections, bullet points, or data fields for which there is no real data available. Only display information that exists in the provided property and tax data. Do not display placeholders, empty fields, or mention unavailable data.
@@ -441,7 +471,7 @@ CRITICAL FORMATTING REQUIREMENTS:
 - Do Not include any images, videos, or other media in the report
 
 Make the analysis data-driven, professional, and actionable for real estate investors using ONLY the real property and tax data provided.
-  `;
+`;
 
   try {
     const completion = await openai.chat.completions.create({
